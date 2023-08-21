@@ -1,5 +1,6 @@
 package com.example.jwt.config;
 
+import com.example.jwt.config.jwt.JwtAuthenticationFilter;
 import com.example.jwt.filter.MyFilter1;
 import com.example.jwt.filter.MyFilter3;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        // BasicAuthenticationFilter가 걸리기 전에 MyFilter1가 필터링 함
+        // BasicAuthenticationFilter가 걸리기 전에 MyFilter1가 필터링
         http.addFilterBefore(new MyFilter3(), SecurityContextPersistenceFilter.class);
 
         http.csrf().disable();
@@ -31,6 +32,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(corsFilter) // 모든 요청은 이 필터를 거침. cors 정책에서 벗어날 수 있음. / @CrossOrigin은 인증이 필요없는 요청에만 가능
                 .formLogin().disable()
                 .httpBasic().disable() // ID,PW 들고가는 방식 <-> Bearer 방식을 사용하기 위해 비활성
+                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**")
                 .access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
@@ -39,6 +41,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1/admin/**")
                 .access("hasRole('ROLE_ADMIN')")
                 .anyRequest().permitAll();
-
     }
 }
