@@ -11,8 +11,8 @@ public class MyFilter1 implements Filter {
             ServletResponse response,
             FilterChain chain
     ) throws IOException, ServletException {
-        System.out.println("필터 1");
 
+        System.out.println("필터 1");
         chain.doFilter(request, response);
     }
 }
