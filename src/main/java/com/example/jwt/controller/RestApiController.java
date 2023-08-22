@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestApiController {
 
     private final UserRepository userRepository;
-
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @GetMapping("home")
@@ -33,5 +32,20 @@ public class RestApiController {
         user.setRoles("ROLE_USER");
         userRepository.save(user);
         return "회원가입 완료";
+    }
+
+    @GetMapping("/api/v1/user") // user, manager, admin
+    public String user() {
+        return "user";
+    }
+
+    @GetMapping("/api/v1/manager") // manager, admin
+    public String manager() {
+        return "manager";
+    }
+
+    @GetMapping("/api/v1/admin") // admin
+    public String admin() {
+        return "admin";
     }
 }
