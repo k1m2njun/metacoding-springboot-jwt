@@ -1,13 +1,20 @@
 package com.example.jwt.config.jwt;
 
+import com.example.jwt.config.auth.PrincipalDetails;
+import com.example.jwt.model.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 // username, password와 함께 "/login"이 요청되면 스프링 시큐리티에서 아래 필터가 동작함
 @RequiredArgsConstructor
@@ -23,15 +30,41 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     ) throws AuthenticationException {
         System.out.println("JwtAuthenticationFilter.attemptAuthentication() 실행됨 - 로그인 시도 중");
 
-        // 1. username, password
+        try {
+//            BufferedReader br = request.getReader();
+//
+//            String input = null;
+//            while((input = br.readLine()) != null) {
+//                System.out.println(input);
+//            }
+            ObjectMapper om = new ObjectMapper(); // 이 클래스가 Json 데이터를 파싱해준다.
+            User user = om.readValue(request.getInputStream(), User.class);
 
-        // 2. 정상인지 확인, authenticationManager로 로그인 시도 -> principalDetails 호출 되고
-        // loadUserByUsername() 실행됨
+            // 1. username, password
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
 
-        // 3. principalDetails를 세션에 담음 - 권한 관리를 위함
+            // 2. 정상인지 확인, authenticationManager로 로그인 시도
+            // -> principalDetails 호출 되고 loadUserByUsername() 실행됨
+            // 이후 정상이면 authentication이 리턴 됨
 
-        // 4. JWT 토큰을 만들어서 응답
+            return authenticationManager.authenticate(authenticationToken); // authentication 객체가 세션 영역에 저장됨.
+            // JWT 토큰을 사용하면서 세션은 필요 없지만, 단지 권한 처리를 위해 만들어 주는 것임.
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        return super.attemptAuthentication(request, response);
+    // attemptAuthentication() 실행 후 인증이 정상적으로 되면 successfulAuthentication() 실행됨
+    // JWT 토큰을 만들어서 request 요청 사용자에게 JWT 토큰을 응답해줌.
+    @Override
+    protected void successfulAuthentication(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain,
+            Authentication authResult
+    ) throws IOException, ServletException {
+
+        super.successfulAuthentication(request, response, chain, authResult);
     }
 }
