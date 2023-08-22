@@ -1,5 +1,7 @@
 package com.example.jwt.config.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.example.jwt.config.auth.PrincipalDetails;
 import com.example.jwt.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 // username, password와 함께 "/login"이 요청되면 스프링 시큐리티에서 아래 필터가 동작함
 @RequiredArgsConstructor
@@ -65,6 +68,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             Authentication authResult
     ) throws IOException, ServletException {
 
-        super.successfulAuthentication(request, response, chain, authResult);
+        System.out.println("JwtAuthenticationFilter.successfulAuthentication() 실행됨 - 인증 완료");
+        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
+
+        String jwtToken = JWT.create()
+                .withSubject("cos 토큰")
+                .withExpiresAt(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 1))) // 만료시간 (1시간)
+                .withClaim("id", principalDetails.getUser().getId()) // 계정 id 정보
+                .withClaim("username", principalDetails.getUser().getUsername()) // 계정 정보
+                .sign(Algorithm.HMAC512("cos"));
+
+        response.addHeader("Authorization", "Bearer " + jwtToken);
     }
 }
